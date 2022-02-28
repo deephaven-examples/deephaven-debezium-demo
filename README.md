@@ -32,9 +32,9 @@ Then start a Deephaven web console (will be in python mode by default per the co
 http://localhost:10000/ide
 ```
 
-and cut & paste to it from `/scripts/demo.py`.  
+cut & paste to it from `/scripts/demo.py`.  
 
-Suggesting that you cut&paste instead of automatically setting the script to run is intentional, so that you can see tables as they are created and populated and watch them update before you execute the next command.
+As you cut&paste instead the script you can see tables as they are created and populated and watch them update before you execute the next command.
 
 If you want to load everything in one command, however, you can do it as the `demo.py` file is available inside the DH server container under `/scripts/demo.py`.
 
@@ -47,17 +47,15 @@ In DH, the `pageviews_summary` table can help track the last pageview seen.
 The file `debezium/scripts/demo.sql` contains the original
 [Materialize script](https://github.com/MaterializeInc/ecommerce-demo/blob/main/README_RPM.md)
 
-
 To load the Materialize script, run the materialized command line interface (cli) via:
- 
+
  `docker-compose run mzcli`
 
 Once in the materialize cli, run:
 `\i /scripts/demo.sql`
 
 You should see a number of `CREATE SOURCE` and `CREATE VIEW` lines of output.
-  
-  
+
 If the host has `psql` installed, we can use the shell watch command to run a select statement to can help track the last pageview seen:
 ```
 watch -n1 "psql -c '
