@@ -9,6 +9,13 @@ The load generation script is in `loadgen/generate_load.py`.
 
 It is possible to configure the update rate for both purchase (mysql updates) and pageviews (kafka pageview events) via ENVIRONMENT arguments set for the loadgen image in the docker-compose.yml file.
 
+### Components
+
+* `docker-compose.yml` - The Docker Compose file for the application. This is mostly the same as the [Deephaven docker-compose file](https://raw.githubusercontent.com/deephaven/deephaven-core/main/containers/python/docker-compose.yml) with modifications to run Redpanda, mysql, debezium and the scripts to generate the simulated website.
+* `scripts/demo.py` - The Deephaven commands used in this demo.
+* `scripts/demo.sql` - The Materialize demo script.
+* `loadgen/*` - The load generation scripts.
+
 # How to run in Deephaven
 
 First, to run this demo you will need to clone our [github examples repo](https://github.com/deephaven-examples/deephaven-debezium-demo)
@@ -23,7 +30,7 @@ For more detailed instructions see our [documentation](/core/docs/tutorials/quic
 
 ```
 cd deephaven-debezium-demo
-docker-compose up -d
+docker-compose -f docker-compose.yml up -d
 ```
 
 Then start a Deephaven web console (will be in python mode by default per the command above) by navigating to
@@ -32,9 +39,9 @@ Then start a Deephaven web console (will be in python mode by default per the co
 http://localhost:10000/ide
 ```
 
-and cut & paste to it from `/scripts/demo.py`.  
+Cut and paste to it from `/scripts/demo.py`.  
 
-Suggesting that you cut&paste instead of automatically setting the script to run is intentional, so that you can see tables as they are created and populated and watch them update before you execute the next command.
+As you cut & paste the script, you can see tables as they are created and populated and watch them update before you execute the next command.
 
 If you want to load everything in one command, however, you can do it as the `demo.py` file is available inside the DH server container under `/scripts/demo.py`.
 
@@ -42,43 +49,6 @@ You can load that in its entirety on the DH console with `exec(open('/scripts/de
 
 In DH, the `pageviews_summary` table can help track the last pageview seen.
 
-# How to run in Materialize
-
-The file `debezium/scripts/demo.sql` contains the original
-[Materialize script](https://github.com/MaterializeInc/ecommerce-demo/blob/main/README_RPM.md)
-
-
-To load the Materialize script, run the materialized command line interface (cli) via:
- 
- `docker-compose run mzcli`
-
-Once in the materialize cli, run:
-`\i /scripts/demo.sql`
-
-You should see a number of `CREATE SOURCE` and `CREATE VIEW` lines of output.
-  
-  
-If the host has `psql` installed, we can use the shell watch command to run a select statement to can help track the last pageview seen:
-```
-watch -n1 "psql -c '
-SELECT
-  total,
-  to_timestamp(max_received_at) max_received_ts,
-  mz_logical_timestamp()/1000.0 AS logical_ts_ms,
-  mz_logical_timestamp()/1000.0 - max_received_at AS dt_ms
-FROM pageviews_summary;'  -U materialize -h localhost -p 6875
-```
-
-# Memory and CPU requirements
-
-The parameters used for images in the docker compose file in this directory are geared towards high message throughput.  While Deephaven itself is running with the same default configuration used for general demos (as of this writing, 4 cpus and 4 Gb of memory), the configurations for redpanda, mysql, and debezium are tweaked to reduce their impact in end-to-end latency and throughput measurements; we make extensive use of RAM disks (tmpfs) and increase some parameters to ones closer to production (e.g., redpanda's number of cpus and memory per core).  To get a full picture of the configuration used, consult the files:
-
-- `.env`
-- `docker-compose.yml`
-
-Once started the compose will take around 6 Gb of memory from the host; as events arrive and specially if event rates are increased, it will increase to 10-16 Gb or more.
-
-For increased event rates (eg, 50,000 pageviews per second), CPU utilization will spike to 14 CPU threads or more.
 
 # Attributions
 
