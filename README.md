@@ -42,41 +42,6 @@ You can load that in its entirety on the DH console with `exec(open('/scripts/de
 
 In DH, the `pageviews_summary` table can help track the last pageview seen.
 
-# How to run in Materialize
-
-The file `debezium/scripts/demo.sql` contains the original
-[Materialize script](https://github.com/MaterializeInc/ecommerce-demo/blob/main/README_RPM.md)
-
-To load the Materialize script, run the materialized command line interface (cli) via:
-
- `docker-compose run mzcli`
-
-Once in the materialize cli, run:
-`\i /scripts/demo.sql`
-
-You should see a number of `CREATE SOURCE` and `CREATE VIEW` lines of output.
-
-If the host has `psql` installed, we can use the shell watch command to run a select statement to can help track the last pageview seen:
-```
-watch -n1 "psql -c '
-SELECT
-  total,
-  to_timestamp(max_received_at) max_received_ts,
-  mz_logical_timestamp()/1000.0 AS logical_ts_ms,
-  mz_logical_timestamp()/1000.0 - max_received_at AS dt_ms
-FROM pageviews_summary;'  -U materialize -h localhost -p 6875
-```
-
-# Memory and CPU requirements
-
-The parameters used for images in the docker compose file in this directory are geared towards high message throughput.  While Deephaven itself is running with the same default configuration used for general demos (as of this writing, 4 cpus and 4 Gb of memory), the configurations for redpanda, mysql, and debezium are tweaked to reduce their impact in end-to-end latency and throughput measurements; we make extensive use of RAM disks (tmpfs) and increase some parameters to ones closer to production (e.g., redpanda's number of cpus and memory per core).  To get a full picture of the configuration used, consult the files:
-
-- `.env`
-- `docker-compose.yml`
-
-Once started the compose will take around 6 Gb of memory from the host; as events arrive and specially if event rates are increased, it will increase to 10-16 Gb or more.
-
-For increased event rates (eg, 50,000 pageviews per second), CPU utilization will spike to 14 CPU threads or more.
 
 # Attributions
 
