@@ -12,6 +12,7 @@ It is possible to configure the update rate for both purchase (mysql updates) an
 ### Components
 
 * `docker-compose.yml` - The Docker Compose file for the application. This is mostly the same as the [Deephaven docker-compose file](https://raw.githubusercontent.com/deephaven/deephaven-core/main/containers/python/docker-compose.yml) with modifications to run Redpanda, mysql, debezium and the scripts to generate the simulated website.
+* `.env` - The environmental variables used in this demo.
 * `scripts/demo.py` - The Deephaven commands used in this demo.
 * `scripts/demo.sql` - The Materialize demo script.
 * `loadgen/*` - The load generation scripts.
