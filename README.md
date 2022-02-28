@@ -9,6 +9,13 @@ The load generation script is in `loadgen/generate_load.py`.
 
 It is possible to configure the update rate for both purchase (mysql updates) and pageviews (kafka pageview events) via ENVIRONMENT arguments set for the loadgen image in the docker-compose.yml file.
 
+### Components
+
+* `docker-compose.yml` - The Docker Compose file for the application. This is mostly the same as the [Deephaven docker-compose file](https://raw.githubusercontent.com/deephaven/deephaven-core/main/containers/python/docker-compose.yml) with modifications to run Redpanda, mysql, debezium and the scripts to generate the simulated website.
+* `scripts/demo.py` - The Deephaven commands used in this demo.
+* `scripts/demo.sql` - The Materialize demo script.
+* `loadgen/*` - The load generation scripts.
+
 # How to run in Deephaven
 
 First, to run this demo you will need to clone our [github examples repo](https://github.com/deephaven-examples/deephaven-debezium-demo)
@@ -23,7 +30,7 @@ For more detailed instructions see our [documentation](/core/docs/tutorials/quic
 
 ```
 cd deephaven-debezium-demo
-docker-compose up -d
+docker-compose -f docker-compose.yml up -d
 ```
 
 Then start a Deephaven web console (will be in python mode by default per the command above) by navigating to
