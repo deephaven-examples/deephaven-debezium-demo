@@ -1,5 +1,4 @@
-Debezium - Kafka Demo
-=====================
+# deephaven-debezium-demo
 
 The docker compose file in this directory starts a compose with
 images for mysql, Debezium, Redpanda (kafka implementation) and Deephaven,
@@ -19,18 +18,22 @@ file.
 How to run
 ==========
 
-First, if you are building from sources, follow the instructions
-in https://deephaven.io/core/docs/how-to-guides/launch-build,
-and ensure you can launch a regular version of Deephaven
-as per the instructions there.  Once that works, stop that
-Deephaven instance, and continue below.
-
-Start docker-compose with the compose file in this
-directory:
+First, to run this demo you will need to clone our [github examples repo](https://github.com/deephaven-examples/deephaven-debezium-demo)
 
 ```
-cd debezium/demo
-docker-compose up --build
+gh repo clone deephaven-examples/deephaven-debezium-demo
+```
+
+To build you need have the these dependances:
+    - docker ^20.10.8  
+    - docker-compose ^1.29.0
+
+For more detailed instructions see our [documentation](/core/docs/tutorials/quickstart/).
+
+
+```
+cd deephaven-debezium-demo
+docker-compose up -d
 ```
 
 Then start a Deephaven web console (will be in python mode
@@ -40,7 +43,7 @@ by default per the command above) by navigating to
 http://localhost:10000/ide
 ```
 
-and cut & paste to it from `debezium/scripts/demo.py`.  If Deephaven is running
+and cut & paste to it from `/scripts/demo.py`.  If Deephaven is running
 on a different host from your browser, you can replace `localhost`
 with the right hostname.
 

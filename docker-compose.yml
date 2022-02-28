@@ -23,6 +23,7 @@ services:
       - --set redpanda.enable_idempotence=true
     ports:
       - 9092:9092
+      - 29092:29092
       - 8081:8081
       - 8082:8082
 
@@ -56,23 +57,26 @@ services:
     environment:
       - PAGEVIEWS_PER_SECOND_START=750
       - PURCHASES_PER_SECOND_START=10
+      - MAX_PARALLEL_PURCHASES=1
+      - MAX_PARALLEL_PAGEVIEWS=1
       - COMMAND_ENDPOINT=0.0.0.0:8090
       - KAFKA_PRODUCER_ACKS
     ports:
       - 8090:8090
 
   server:
-    image: ghcr.io/deephaven/server:${VERSION:-latest}
+    image: ghcr.io/deephaven/server:${DEEPHAVEN_VERSION:-latest}
     expose:
       - '8080'
     volumes:
       - ./data:/data
+      - ./scripts:/scripts
       - api-cache:/cache
     environment:
-      - JAVA_TOOL_OPTIONS=-Xmx4g -Ddeephaven.console.type=python
+      - JAVA_TOOL_OPTIONS=-Xmx${DEEPHAVEN_HEAP} -Ddeephaven.console.type=${DEEPHAVEN_CONSOLE_TYPE} -Ddeephaven.application.dir=${DEEPHAVEN_APPLICATION_DIR}
 
   web:
-    image: ghcr.io/deephaven/web:${VERSION:-latest}
+    image: ghcr.io/deephaven/web:${DEEPHAVEN_VERSION:-latest}
     expose:
       - '80'
     volumes:
@@ -80,7 +84,7 @@ services:
       - web-tmp:/tmp
 
   grpc-proxy:
-    image: ghcr.io/deephaven/grpc-proxy:${VERSION:-latest}
+    image: ghcr.io/deephaven/grpc-proxy:${DEEPHAVEN_VERSION:-latest}
     environment:
       - BACKEND_ADDR=server:8080
     depends_on:
@@ -89,7 +93,7 @@ services:
       - '8080'
 
   envoy:
-    image: ghcr.io/deephaven/envoy:${VERSION:-latest}
+    image: ghcr.io/deephaven/envoy:${DEEPHAVEN_VERSION:-latest}
     depends_on:
       - web
       - grpc-proxy
