@@ -32,9 +32,9 @@ Then start a Deephaven web console (will be in python mode by default per the co
 http://localhost:10000/ide
 ```
 
-cut & paste to it from `/scripts/demo.py`.  
+Cut and paste to it from `/scripts/demo.py`.  
 
-As you cut&paste instead the script you can see tables as they are created and populated and watch them update before you execute the next command.
+As you cut & paste the script, you can see tables as they are created and populated and watch them update before you execute the next command.
 
 If you want to load everything in one command, however, you can do it as the `demo.py` file is available inside the DH server container under `/scripts/demo.py`.
 
