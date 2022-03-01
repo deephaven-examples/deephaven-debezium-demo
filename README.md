@@ -4,6 +4,8 @@ The demo follows closely the one defined for [Materialize](https://github.com/Ma
 
 The docker compose file in this directory starts a compose with images for mysql, [Redpanda](https://redpanda.com/), [Debezium](https://debezium.io/) and Deephaven, plus an additional image to generate an initial mysql schema and then generate updates to the tables over time for a simple e-commerce demo.
 
+![img](./debezium.png)
+
 
 ### Components
 
