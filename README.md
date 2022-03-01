@@ -1,9 +1,8 @@
 # deephaven-debezium-demo
 
-The docker compose file in this directory starts a compose with images for mysql, [Redpanda](https://redpanda.com/), [Debezium](https://debezium.io/) and Deephaven, plus an additional image to generate an initial mysql schema and then generate updates to the tables over time for a simple e-commerce demo.
-
 The demo follows closely the one defined for [Materialize](https://github.com/MaterializeInc/ecommerce-demo/blob/main/README_RPM.md) :
 
+The docker compose file in this directory starts a compose with images for mysql, [Redpanda](https://redpanda.com/), [Debezium](https://debezium.io/) and Deephaven, plus an additional image to generate an initial mysql schema and then generate updates to the tables over time for a simple e-commerce demo.
 
 
 ### Components
@@ -182,7 +181,7 @@ Because the first three sources are pulling message schema data from the registr
 
 Now you should _automatically_ see the four sources we created in the IDE. These are fully interactable. In the UI, you can [sort](/core/docs/how-to-guides/user-interface/work-with-columns/), [filter](/core/docs/how-to-guides/user-interface/filters/) or scroll through _all_ the data without any other commands.
 
-![img](./assets/debezium1.png)
+![img](./debezium1.png)
 
 7. Next, we'll create a table for staging the page views. We can use this to aggregate information later.
 
@@ -244,7 +243,7 @@ top_converting_items = item_summary \
     .head(20)
 ```
 
-![img](./assets/debezium1.gif)
+![img](./debezium1.gif)
 
 Another useful table is `pageviews_summary` that counts the total number of pages seen:
 
