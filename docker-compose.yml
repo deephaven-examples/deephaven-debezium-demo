@@ -73,7 +73,7 @@ services:
       - ./scripts:/scripts
       - api-cache:/cache
     environment:
-      - JAVA_TOOL_OPTIONS=-Xmx${DEEPHAVEN_HEAP} -Ddeephaven.console.type=${DEEPHAVEN_CONSOLE_TYPE} -Ddeephaven.application.dir=${DEEPHAVEN_APPLICATION_DIR}
+      - JAVA_TOOL_OPTIONS=-Xmx42g -Ddeephaven.console.type=${DEEPHAVEN_CONSOLE_TYPE} -Ddeephaven.application.dir=${DEEPHAVEN_APPLICATION_DIR}
 
   web:
     image: ghcr.io/deephaven/web:${DEEPHAVEN_VERSION:-latest}
