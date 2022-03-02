@@ -1,80 +1,63 @@
 # deephaven-debezium-demo
 
-The demo follows closely the one defined for [Materialize](https://github.com/MaterializeInc/ecommerce-demo/blob/main/README_RPM.md) :
+The demo follows closely the one defined for [Materialize](https://github.com/MaterializeInc/ecommerce-demo/blob/main/README_RPM.md). We want to showcase how you can accomplish the same workflow in Deephaven, with lightning-fast performance.
 
-The docker compose file in this directory starts a compose with images for mysql, [Redpanda](https://redpanda.com/), [Debezium](https://debezium.io/) and Deephaven, plus an additional image to generate an initial mysql schema and then generate updates to the tables over time for a simple e-commerce demo.
+The docker-compose file in this directory starts a compose with images for MySQL, [Redpanda](https://redpanda.com/), [Debezium](https://debezium.io/), and Deephaven, plus an additional image to generate an initial MySQL schema and then generate updates to the tables over time for a simple e-commerce demo.
 
 ![img](./debezium.png)
 
 
 ### Components
 
-* `docker-compose.yml` - The Docker Compose file for the application. This is mostly the same as the [Deephaven docker-compose file](https://raw.githubusercontent.com/deephaven/deephaven-core/main/containers/python/docker-compose.yml) with modifications to run Redpanda, mysql, debezium and the scripts to generate the simulated website.
+* `docker-compose.yml` - The Docker Compose file for the application. This is mostly the same as the [Deephaven docker-compose file](https://raw.githubusercontent.com/deephaven/deephaven-core/main/containers/python/docker-compose.yml) with modifications to run Redpanda, MySQL, Debezium, and the scripts to generate the simulated website.
 * `.env` - The environmental variables used in this demo.
 * `scripts/demo.py` - The Deephaven commands used in this demo.
 * `scripts/demo.sql` - The Materialize demo script.
 * `loadgen/*` - The load generation scripts.
 
-Configure the update rate for both purchase (mysql updates) and pageviews (kafka pageview events) via ENVIRONMENT arguments set for the loadgen image in the docker-compose.yml file.
+Configure the update rate for both purchase (MySQL updates) and pageviews (Kafka pageview events) via ENVIRONMENT arguments set for the loadgen image in the docker-compose.yml file.
 
 ## Quick Start
 
-First, to run this demo you will need to clone our [github examples repo](https://github.com/deephaven-examples/deephaven-debezium-demo)
+First, to run this demo you will need to clone our [github examples repo](https://github.com/deephaven-examples/deephaven-debezium-demo):
 
 ```
 gh repo clone deephaven-examples/deephaven-debezium-demo
 ```
 
-To build you need have the these dependances for any Deephaven dockerized initialization such as docker and docker-compose
+To build, you need have the these dependancies for any Deephaven dockerized initialization such as docker and docker-compose.
 
-For more detailed instructions see our [documentation](/core/docs/tutorials/quickstart/).
+For more detailed instructions, see our [Quickstart guide](/core/docs/tutorials/quickstart/).
 
-Launch via Docker
+1. Launch via Docker:
 
 ```
 cd deephaven-debezium-demo
 docker-compose -f docker-compose.yml up -d
 ```
 
-Then start a [Deephaven web console](http://localhost:10000/ide) (will be in python mode by default per the command above) by navigating to
+2. Then start a [Deephaven web console](http://localhost:10000/ide) (this will be in Python mode by default, per the command above) by navigating to:
 
 ```
 http://localhost:10000/ide
 ```
 
-Cut and paste to it from `/scripts/demo.py`.  
+3. Copy and paste to it from `/scripts/demo.py`.  
 
-As you cut & paste the script, you can see tables as they are created and populated and watch them update before you execute the next command.  Details below.
+As you copy and paste the script, you can see tables as they are created and populated and watch them update before you execute the next command.  Details below.
 
 
 ## Details to implement
 
-The Bullet numbers are from the demo defined for the [Redpanda + Materialize Demo](https://github.com/MaterializeInc/ecommerce-demo/blob/main/README_RPM.md).
+The numbered steps below are from the demo defined for the [Redpanda + Materialize Demo](https://github.com/MaterializeInc/ecommerce-demo/blob/main/README_RPM.md).
 
-1. First, to run this demo, you will need to clone our [Github examples repo](https://github.com/deephaven-examples/deephaven-debezium-demo).
-
-```
-gh repo clone deephaven-examples/deephaven-debezium-demo
-```
-
-2. Bring up the Docker Compose containers in the background:
-
-:::note
-For more detailed instructions, see our [Quickstart guide](/core/docs/tutorials/quickstart/).
-:::
-
-```
-cd deephaven-debezium-demo
-docker-compose up -d
-```
-
-3. _Optional_ Confirm that everything is running as expected:
+4. _Optional_ Confirm that everything is running as expected:
 
 ```shell session
 docker stats
 ```
 
-4. _Optional_ Log in to MySQL to confirm that tables are created and seeded:
+5. _Optional_ Log in to MySQL to confirm that tables are created and seeded:
 
 ```shell
 docker-compose -f docker-compose.yml run mysql mysql -uroot -pdebezium -h mysql shop
@@ -86,7 +69,7 @@ SHOW TABLES;
 SELECT * FROM purchases LIMIT 1;
 ```
 
-5. _Optional_ `exec` in to the `redpanda` container to look around using Redpanda's amazing `rpk` CLI:
+6. _Optional_ `exec` in to the `redpanda` container to look around using Redpanda's amazing `rpk` CLI:
 
 ```shell session
 docker-compose -f docker-compose.yml exec redpanda /bin/bash
@@ -113,11 +96,6 @@ You should see a live feed of JSON formatted pageview Kafka messages:
 }
 ```
 
-6. Launch the [Deephaven web console (IDE)](http://localhost:10000/ide) by navigating to:
-
-```
-http://localhost:10000/ide
-```
 
 ### Deephaven Commands
 
@@ -185,7 +163,7 @@ Now you should _automatically_ see the four sources we created in the IDE. These
 
 ![img](./debezium1.png)
 
-7. Next, we'll create a table for staging the page views. We can use this to aggregate information later.
+8. Next, we'll create a table for staging the page views. We can use this to aggregate information later.
 
 ```python skip-test
 pageviews_stg = pageviews \
@@ -198,7 +176,7 @@ pageviews_stg = pageviews \
 
 ### Analytical views
 
-8. Let's create a couple analytical views to get a feel for how it works.
+9. Let's create a couple analytical views to get a feel for how it works.
 
 Start simple with a table that aggregates purchase stats by item:
 
@@ -260,7 +238,7 @@ pageviews_summary = pageviews_stg \
 
 ### User-facing data views
 
-9.  [Redpanda](https://redpanda.com/) is often used in building rich data-intensive applications. Let's try creating a view meant to power something like the "Who has viewed your profile" feature on Linkedin:
+10.  [Redpanda](https://redpanda.com/) is often used in building rich data-intensive applications. Let's try creating a view meant to power something like the "Who has viewed your profile" feature on Linkedin:
 
 User views of other user profiles:
 
@@ -314,7 +292,7 @@ profile_views_enriched = profile_views \
 
 ### Demand-driven query
 
-10. Since Redpanda has such a nice HTTP interface, it makes it easier to extend without writing lots of glue code and services. Here's an example where we use pandaproxy to do a "demand-driven query".
+11. Since Redpanda has such a nice HTTP interface, it makes it easier to extend without writing lots of glue code and services. Here's an example where we use pandaproxy to do a "demand-driven query".
 
 Add a message to the `dd_flagged_profiles` topic:
 
@@ -336,7 +314,7 @@ dd_flagged_profile_view = dd_flagged_profiles \
     .join(pageviews_stg, 'user_id')
 ```
 
-11. Sink data back out to Redpanda.
+12. Sink data back out to Redpanda.
 
 Let's create a view that flags "high-value" users that have spent $10k or more total:
 
@@ -415,7 +393,7 @@ You've how fun and easy it is to use Deephaven. Within the IDE, you can see your
 
 # Attributions
 
-Files in this directory are based on demo code by Debezium, Redpanda, and Materialize
+Files in this directory are based on demo code by Debezium, Redpanda, and Materialize:
 
 * [Debezium](https://github.com/debezium/debezium)
 * [Redpanda](https://github.com/vectorizedio/redpanda)
