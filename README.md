@@ -25,9 +25,9 @@ First, to run this demo you will need to clone our [github examples repo](https:
 gh repo clone deephaven-examples/deephaven-debezium-demo
 ```
 
-To build, you need have the these dependancies for any Deephaven dockerized initialization such as docker and docker-compose.
+To build, you need to have the standard Deephaven dependancies such as docker and docker-compose.
 
-For more detailed instructions, see our [Quickstart guide](/core/docs/tutorials/quickstart/).
+For more detailed instructions, see our [Quickstart guide](https://deephaven.io/core/docs/tutorials/quickstart/).
 
 1. Launch via Docker:
 
