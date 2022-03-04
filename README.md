@@ -33,7 +33,7 @@ For more detailed instructions, see our [Quickstart guide](/core/docs/tutorials/
 
 ```
 cd deephaven-debezium-demo
-docker-compose -f docker-compose.yml up -d
+docker-compose up -d
 ```
 
 2. Then start a [Deephaven web console](http://localhost:10000/ide) (this will be in Python mode by default, per the command above) by navigating to:
