@@ -60,7 +60,7 @@ docker stats
 5. _Optional_ Log in to MySQL to confirm that tables are created and seeded:
 
 ```shell
-docker-compose -f docker-compose.yml run mysql mysql -uroot -pdebezium -h mysql shop
+docker-compose run mysql mysql -uroot -pdebezium -h mysql shop
 ```
 
 ```sql
@@ -72,7 +72,7 @@ SELECT * FROM purchases LIMIT 1;
 6. _Optional_ `exec` in to the `redpanda` container to look around using Redpanda's amazing `rpk` CLI:
 
 ```shell session
-docker-compose -f docker-compose.yml exec redpanda /bin/bash
+docker-compose exec redpanda /bin/bash
 
 rpk debug info
 
