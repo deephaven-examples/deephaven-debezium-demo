@@ -362,7 +362,6 @@ cancel_callback = pk.produceFromTable(
 )
 ```
 
-This is a bit more complex because it is an `exactly-once` sink. This means that across Deephaven restarts, it will never output the same update more than once.
 
 We won't be able to preview the results with `rpk` because it's AVRO formatted. But we can actually stream it BACK into Deephaven to confirm the format!
 
