@@ -106,12 +106,13 @@ Here, we will show you the analogous Deephaven commands and continue the bullet 
 7. Now that you're in the Deephaven IDE, define all of the tables in `mysql.shop` as Kafka sources:
 
 ```python skip-test
-import deephaven.ConsumeCdc as cc
-import deephaven.ConsumeKafka as ck
-import deephaven.ProduceKafka as pk
-import deephaven.Types as dh
-from deephaven import Aggregation as agg, as_list
-import deephaven.TableManipulation.WindowCheck as wck
+import deephaven.stream.kafka.cdc as cc
+from deephaven import kafka_consumer as ck
+from deephaven import kafka_producer as pk
+from deephaven.stream.kafka.consumer import TableType, KeyValueSpec
+from deephaven import dtypes as dh
+from deephaven import agg as agg
+from deephaven.experimental import time_window
 
 server_name = 'mysql'
 db_name='shop'
@@ -124,7 +125,7 @@ kafka_base_properties = {
 
 
 def make_cdc_table(table_name:str):
-    return cc.consumeToTable(
+    return cc.consume(
         kafka_base_properties,
         cc.cdc_short_spec(server_name,
                           db_name,
@@ -144,16 +145,16 @@ consume_properties = {
     }
 }
 
-pageviews = ck.consumeToTable(
+pageviews = ck.consume(
     consume_properties,
     topic = 'pageviews',
     offsets = ck.ALL_PARTITIONS_SEEK_TO_BEGINNING,
-    key = ck.IGNORE,
-    value = ck.json([ ('user_id', dh.long_),
+    key_spec = KeyValueSpec.IGNORE,
+    value_spec = ck.json_spec([ ('user_id', dh.int_),
                       ('url', dh.string),
                       ('channel', dh.string),
-                      ('received_at', dh.datetime) ]),
-    table_type = 'append'
+                      ('received_at', dh.DateTime) ]),
+    table_type = TableType.Append
 )
 ```
 
@@ -167,11 +168,11 @@ Now you should _automatically_ see the four sources we created in the IDE. These
 
 ```python skip-test
 pageviews_stg = pageviews \
-    .updateView(
+    .update_view([
         'url_path = url.split(`/`)',
         'pageview_type = url_path[1]',
         'target_id = Long.parseLong(url_path[2])'
-    ).dropColumns('url_path')
+    ]).drop_columns('url_path')
 ```
 
 ### Analytical views
@@ -181,12 +182,12 @@ pageviews_stg = pageviews \
 Start simple with a table that aggregates purchase stats by item:
 
 ```python skip-test
-purchases_by_item = purchases.aggBy(
-    as_list([
-        agg.AggSum('revenue = purchase_price'),
-        agg.AggCount('orders'),
-        agg.AggSum('items_sold = quantity')
-    ]),
+purchases_by_item = purchases.agg_by(
+    [
+        agg.sum_(['revenue = purchase_price']),
+        agg.count_('orders'),
+        agg.sum_(['items_sold = quantity'])
+    ],
     'item_id'
 )
 ```
@@ -195,31 +196,33 @@ The next query creates something similar that uses our `pageview_stg` static vie
 
 ```python skip-test
 pageviews_by_item = pageviews_stg \
-    .where('pageview_type = `products`') \
-    .countBy('pageviews', 'item_id = target_id')
+    .where(['pageview_type = `products`']) \
+    .count_by('pageviews', ['item_id = target_id'])
 ```
 
 Now let's show how you can combine and stack views by creating a single table that brings everything together:
 
 ```python skip-test
 item_summary = items \
-    .view('item_id = id', 'name', 'category') \
-    .naturalJoin(purchases_by_item, 'item_id') \
-    .naturalJoin(pageviews_by_item, 'item_id') \
-    .dropColumns('item_id') \
-    .moveColumnsDown('revenue', 'pageviews') \
-    .updateView('conversion_rate = orders / (double) pageviews')
+    .view(['item_id = id', 'name', 'category']) \
+    .natural_join(purchases_by_item, on = ['item_id']) \
+    .natural_join(pageviews_by_item, on = ['item_id']) \
+    .drop_columns('item_id') \
+    .move_columns_down(['revenue', 'pageviews']) \
+    .update_view(['conversion_rate = orders / (double) pageviews'])
 ```
 
 We can _automatically_ see that it's working by watching these tables update in the IDE. To see just the top elements, we can filter the data with two new tables:
 
 ```python skip-test
+# These two 'top_*' tables match the 'Business Intelligence: Metabase' / dashboard
+# part of the original example.
 top_viewed_items = item_summary \
-    .sortDescending('pageviews') \
-    .head(20)
+        .sort_descending('pageviews') \
+        .head(20)
 
 top_converting_items = item_summary \
-    .sortDescending('conversion_rate') \
+    .sort_descending('conversion_rate') \
     .head(20)
 ```
 
@@ -229,11 +232,12 @@ Another useful table is `pageviews_summary` that counts the total number of page
 
 ```python skip-test
 pageviews_summary = pageviews_stg \
-    .aggBy(
-        as_list([
-            agg.AggCount('total'),
-            agg.AggMax('max_received_at = received_at')])) \
-    .updateView('dt_ms = (DateTime.now() - max_received_at)/1_000_000.0')
+    .agg_by(
+        [
+            agg.count_('total'),
+            agg.max_(['max_received_at = received_at'])
+        ]) \
+    .update(['dt_ms = (DateTime.now() - max_received_at)/1_000_000.0'])
 ```
 
 ### User-facing data views
@@ -246,48 +250,49 @@ User views of other user profiles:
 minute_in_nanos = 60 * 1000 * 1000 * 1000
 
 profile_views_per_minute_last_10 = \
-    wck.addTimeWindow(
-        pageviews_stg.where('pageview_type = `profiles`'),
-        'received_at',
-        10*minute_in_nanos,
-        'in_last_10min'
+    time_window(
+        pageviews_stg.where(['pageview_type = `profiles`']),
+        ts_col='received_at',
+        window=10*minute_in_nanos,
+        bool_col='in_last_10min'
     ).where(
-        'in_last_10min = true'
-    ).updateView(
-        'received_at_minute = lowerBin(received_at, minute_in_nanos)'
+        ['in_last_10min = true']
+    ).update_view(
+        ['received_at_minute = lowerBin(received_at, minute_in_nanos)']
     ).view(
-        'user_id = target_id',
-        'received_at_minute'
-    ).countBy(
+        ['user_id = target_id',
+        'received_at_minute']
+    ).count_by(
         'pageviews',
-        'user_id',
-        'received_at_minute'
+        ['user_id',
+        'received_at_minute']
     ).sort(
-        'user_id',
-        'received_at_minute'
+        ['user_id',
+        'received_at_minute']
     )
+
 ```
 
 Confirm that this is the data we could use to populate a "profile views" graph for user `10`:
 
-```python skip-test
+```python skip-test 
 profile_views = pageviews_stg \
-    .view(
+    .view([
         'owner_id = target_id',
         'viewer_id = user_id',
         'received_at'
-    ).sort(
+    ]).sort([
         'received_at'
-    ).tailBy(10, 'owner_id')
+    ]).tail_by(10, 'owner_id')
 ```
 
 Next, let's use a `naturalJoin` to get the last five users who have viewed each profile:
 
 ```python skip-test
 profile_views_enriched = profile_views \
-    .naturalJoin(users, 'owner_id = id', 'owner_email = email') \
-    .naturalJoin(users, 'viewer_id = id', 'viewer_email = email') \
-    .moveColumnsDown('received_at')
+    .natural_join(users, on = ['owner_id = id'], joins = ['owner_email = email']) \
+    .natural_join(users, on = ['viewer_id = id'], joins = ['viewer_email = email']) \
+    .move_columns_down('received_at')
 ```
 
 ### Demand-driven query
@@ -297,14 +302,14 @@ profile_views_enriched = profile_views \
 Add a message to the `dd_flagged_profiles` topic:
 
 ```python skip-test
-dd_flagged_profiles = ck.consumeToTable(
+dd_flagged_profiles = ck.consume(
     consume_properties,
     topic = 'dd_flagged_profiles',
     offsets = ck.ALL_PARTITIONS_SEEK_TO_BEGINNING,
-    key = ck.IGNORE,
-    value = ck.simple('user_id_str', dh.string),
-    table_type = 'append'
-).view('user_id = Long.parseLong(user_id_str.substring(1, user_id_str.length() - 1))')  # strip quotes
+    key_spec = KeyValueSpec.IGNORE,
+    value_spec = ck.simple_spec('user_id_str', dh.string),
+    table_type = TableType.Append
+).view(['user_id = Long.parseLong(user_id_str.substring(1, user_id_str.length() - 1))'])  # strip quotes
 ```
 
 Now let's join the `flagged_profile` id to a much larger dataset:
@@ -320,18 +325,18 @@ Let's create a view that flags "high-value" users that have spent $10k or more t
 
 ```python skip-test
 high_value_users = purchases \
-    .updateView(
+    .update_view([
         'purchase_total = purchase_price * quantity'
-    ).aggBy(
-        as_list([
-            agg.AggSum('lifetime_value = purchase_total'),
-            agg.AggCount('purchases'),
-        ]),
+    ]).agg_by([
+            agg.sum_(['lifetime_value = purchase_total']),
+            agg.count_('purchases')
+        ],
         'user_id'
-    ) \
-    .where('lifetime_value > 10000') \
-    .naturalJoin(users, 'user_id = id', 'email') \
-    .view('id = user_id', 'email', 'lifetime_value', 'purchases')  # column rename and reorder
+    )\
+    .where(['lifetime_value > 10000']) \
+    .natural_join(users, 
+                  ['user_id = id'], ['email']) \
+    .view(['id = user_id', 'email', 'lifetime_value', 'purchases'])  # column rename and reorder
 ```
 
 Then, a sink to stream updates to this view back out to Redpanda:
@@ -339,17 +344,17 @@ Then, a sink to stream updates to this view back out to Redpanda:
 ```python skip-test
 schema_namespace = 'io.deephaven.examples'
 
-cancel_callback = pk.produceFromTable(
+cancel_callback = pk.produce(
     high_value_users,
     kafka_base_properties,
     topic = 'high_value_users_sink',
-    key = pk.avro(
+    key_spec = pk.avro_spec(
         'high_value_users_sink_key',
         publish_schema = True,
         schema_namespace = schema_namespace,
         include_only_columns = [ 'user_id' ]
     ),
-    value = pk.avro(
+    value_spec = pk.avro_spec(
         'high_value_users_sink_value',
         publish_schema = True,
         schema_namespace = schema_namespace,
@@ -366,13 +371,13 @@ cancel_callback = pk.produceFromTable(
 We won't be able to preview the results with `rpk` because it's AVRO formatted. But we can actually stream it BACK into Deephaven to confirm the format!
 
 ```python skip-test
-hvu_test = ck.consumeToTable(
+hvu_test = ck.consume(
     consume_properties,
     topic = 'high_value_users_sink',
     offsets = ck.ALL_PARTITIONS_SEEK_TO_BEGINNING,
-    key = ck.IGNORE,
-    value = ck.avro('high_value_users_sink_value'),
-    table_type = 'append'
+    key_spec = KeyValueSpec.IGNORE,
+    value_spec = ck.avro_spec('high_value_users_sink_value'),
+    table_type = TableType.Append
 )
 ```
 
