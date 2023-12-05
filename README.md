@@ -403,3 +403,7 @@ Files in this directory are based on demo code by Debezium, Redpanda, and Materi
 * [Redpanda](https://github.com/vectorizedio/redpanda)
 * [Materialize](https://github.com/MaterializeInc/materialize)
 * [Materialize e-commerce demo](https://github.com/MaterializeInc/ecommerce-demo/blob/main/README_RPM.md)
+
+## Note
+
+The code in this repository is built for Deephaven Community Core v0.11.0. No guarantee of forwards or backwards compatibility is given.
