@@ -406,4 +406,4 @@ Files in this directory are based on demo code by Debezium, Redpanda, and Materi
 
 ## Note
 
-The code in this repository is built for Deephaven Community Core v0.11.0. No guarantee of forwards or backwards compatibility is given.
+The code in this repository is built for Deephaven Community Core v0.11.0. No guarantee of forward or backward compatibility is given.
