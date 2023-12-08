@@ -65,7 +65,7 @@ services:
       - 8090:8090
 
   server:
-    image: ghcr.io/deephaven/server:${DEEPHAVEN_VERSION:-latest}
+    image: ghcr.io/deephaven/server:${DEEPHAVEN_VERSION:-0.11.0}
     expose:
       - '8080'
     volumes:
